@@ -6,6 +6,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#f3e6cf">
 <title>Slowth</title>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js" } }
+</script>
 <style>
   :root {
     --bg: #f3e6cf;
@@ -13,10 +16,6 @@
     --card-text: #f8ecd6;
     --muted: #8a7660;
     --accent: #d9534f;
-    --fur: #8a6a4b;
-    --fur-dark: #6b4f36;
-    --fur-light: #b79a74;
-    --face: #ecdcbc;
   }
   @media (prefers-color-scheme: dark) {
     :root { --bg: #1f1a16; --card: #3b2f26; --muted: #a39078; }
@@ -51,94 +50,12 @@
     transition: opacity .6s; min-height: 20px;
   }
 
-  /* Sloth */
-  #sloth {
-    position: absolute; left: 0; top: 0; width: 260px; height: 150px;
-    margin: -120px 0 0 -130px; pointer-events: none; will-change: transform;
-    transform-origin: 50% 80%;
-  }
-  #sloth svg { width: 100%; height: 100%; overflow: visible; display: block; }
-  #slothInner { transform-origin: 50% 100%; }
-  #sloth .fx { transform-box: fill-box; transform-origin: center; }
+  /* 3D sloth canvas sits above the card and button, below the intro */
+  #gl { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
 
-  .body-g   { transform-box: fill-box; transform-origin: 50% 100%; animation: breathe 6s ease-in-out infinite; }
-  .head-w   { animation: headlift 6s ease-in-out infinite; }
-  .head-g   { transform-box: fill-box; transform-origin: 40% 90%; animation: headbob 7s ease-in-out infinite; }
-  .nose     { transform-box: fill-box; transform-origin: center; animation: sniff 9s ease-in-out infinite; }
-  .claws    { transform-box: fill-box; transform-origin: 50% 0%; animation: curl 6s ease-in-out infinite; }
-  .far      { opacity: .95; }
-  @keyframes headlift { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-1.6px) } }
-  @keyframes sniff    { 0%,86%,100% { transform: scale(1) } 90% { transform: scale(1.22,1.1) } 94% { transform: scale(.95) } }
-  @keyframes curl     { 0%,100% { transform: rotate(0) } 50% { transform: rotate(-6deg) } }
-  .s-awake .head-g { animation: look 9s ease-in-out infinite; }
-  @keyframes look { 0%,100% { transform: rotate(0) } 25% { transform: rotate(-5deg) translateX(-1px) } 60% { transform: rotate(4deg) } 80% { transform: rotate(1deg) } }
-  .eye      { transform-box: fill-box; transform-origin: center; transform: scaleY(.08); }
-  .mouth    { transform-box: fill-box; transform-origin: center; transform: scaleY(0); }
-  .arm      { transform-box: fill-box; transform-origin: 50% 0%; }
-
-  @keyframes breathe  { 0%,100% { transform: scale(1,1) } 50% { transform: scale(1.015,1.04) } }
-  @keyframes headbob  { 0%,100% { transform: rotate(0) } 50% { transform: rotate(2.5deg) } }
-  @keyframes armsway  { 0%,100% { transform: rotate(0) } 50% { transform: rotate(5deg) } }
-  .arm { animation: armsway 7s ease-in-out infinite; }
-  .arm.b { animation-delay: -3s; }
-
-  /* Occasional lazy moves (JS toggles these classes) */
-  .s-droop .arm   { animation: armdroop 5s ease-in-out 1; }
-  @keyframes armdroop { 0%,100% { transform: rotate(0) } 45%,60% { transform: rotate(-14deg) } }
-  .s-stir .eye.l  { animation: stirEye 4.5s ease-in-out 1; }
-  @keyframes stirEye { 0%,100% { transform: scaleY(.08) } 40%,55% { transform: scaleY(.55) } }
-  .s-stretch .body-g { animation: stretch 6s ease-in-out 1; }
-  @keyframes stretch { 0%,100% { transform: scale(1,1) } 45%,60% { transform: scale(1.05,1.06) } }
-
-  /* Wake-up: slow open, big yawn, slow blink */
-  .s-wake .eye    { animation: wakeEye 3s ease-in-out forwards; }
-  .s-wake .mouth  { animation: yawn 3s ease-in-out forwards; }
-  .s-wake .head-g { animation: wakeHead 3s ease-in-out forwards; }
-  @keyframes wakeEye  { 0% { transform: scaleY(.08) } 35% { transform: scaleY(.75) } 48%,62% { transform: scaleY(.2) } 78% { transform: scaleY(.85) } 86% { transform: scaleY(.15) } 100% { transform: scaleY(.95) } }
-  @keyframes yawn     { 0%,38% { transform: scaleY(0) } 55%,72% { transform: scaleY(1) } 90%,100% { transform: scaleY(0) } }
-  @keyframes wakeHead { 0%,38% { transform: rotate(0) } 58% { transform: rotate(-9deg) } 90%,100% { transform: rotate(0) } }
-
-  .s-awake .eye   { transform: scaleY(.95); animation: blink 6s ease-in-out infinite; }
-  @keyframes blink { 0%,90%,100% { transform: scaleY(.95) } 94% { transform: scaleY(.1) } }
-  .s-awake .body-g { animation-duration: 3.5s; }
-
-  /* Fighting back: determined face, trembling arms, claws dug in; then panic when the grip runs out */
-  .s-awake.s-fight .arm   { animation: tremble .14s linear infinite; }
-  .s-awake.s-fight .arm.b { animation-delay: -.07s; }
-  @keyframes tremble { 0%,100% { transform: rotate(-4deg) } 50% { transform: rotate(5deg) } }
-  .s-awake.s-fight .claws { animation: none; transform: rotate(14deg); }
-  .s-awake.s-fight .body-g { animation: strain .35s ease-in-out infinite; }
-  @keyframes strain { 0%,100% { transform: scale(1,1) } 50% { transform: scale(1.03,.96) } }
-  .s-awake.s-fight .head-g { animation: gritshake .12s linear infinite; }
-  @keyframes gritshake { 0%,100% { transform: rotate(-1.5deg) } 50% { transform: rotate(1.5deg) } }
-  .s-awake.s-fight .eye  { transform: scaleY(.55); animation: none; }
-  .s-awake.s-fight .mouth { transform: scaleY(.2); }
-  .s-awake.s-panic .arm   { animation: flail .55s ease-in-out infinite; }
-  .s-awake.s-panic .arm.b { animation-delay: -.25s; }
-  .s-awake.s-panic .eye   { transform: scaleY(1.25); animation: none; }
-  .s-awake.s-panic .mouth { transform: scaleY(.95); }
-  .s-awake.s-panic .head-g { animation: gritshake .2s linear infinite; }
-  .brows-a, .brows-w, .teeth, .sweat { opacity: 0; transition: opacity .15s; }
-  .s-fight .brows-a, .s-fight .teeth { opacity: 1; }
-  .s-panic .brows-w { opacity: 1; }
-  .s-fight .sweat, .s-panic .sweat { opacity: .85; animation: sweatdrop .9s ease-in infinite; }
-  .s-panic .sweat { animation-duration: .5s; }
-  .sweat { transform-box: fill-box; transform-origin: center; }
-  @keyframes sweatdrop { 0% { transform: translateY(-6px) scale(.6); opacity: 0 } 25% { opacity: .9 } 100% { transform: translateY(16px) scale(1); opacity: 0 } }
-  .s-fall .eye    { transform: scaleY(1.15); animation: none; }
-  .s-fall .mouth  { transform: scaleY(.85); }
-  .s-fall .claws, .s-awake.s-panic .claws { animation: clawspread .5s ease-in-out infinite alternate; }
-  @keyframes clawspread { from { transform: rotate(-14deg) } to { transform: rotate(14deg) } }
-  .s-fall .arm    { animation: flail 1.6s ease-in-out infinite; }
-  .s-fall .arm.b  { animation-delay: -.5s; }
-  @keyframes flail { 0%,100% { transform: rotate(-38deg) } 50% { transform: rotate(38deg) } }
-
-  .s-squash #slothInner { animation: squash .9s ease-out 1; }
-  @keyframes squash { 0% { transform: scale(1.06,.8) } 40% { transform: scale(.97,1.05) } 100% { transform: scale(1,1) } }
-
-  #zzz { position: absolute; right: 6px; top: -30px; font-weight: 800; color: var(--muted); font-size: 22px; pointer-events: none; opacity: 0; }
-  .s-sleep #zzz, .s-land #zzz { animation: zzz 5s ease-in-out infinite; }
-  @keyframes zzz { 0% { opacity: 0; transform: translate(0,10px) scale(.7) } 30% { opacity: .9 } 100% { opacity: 0; transform: translate(14px,-34px) scale(1.2) } }
+  #zzz { position: absolute; left: 0; top: 0; z-index: 6; font-weight: 800; color: var(--muted); font-size: 22px; pointer-events: none; opacity: 0; }
+  #zzz.on { animation: zzz 5s ease-in-out infinite; }
+  @keyframes zzz { 0% { opacity: 0; margin: 10px 0 0 0; transform: scale(.7) } 30% { opacity: .9 } 100% { opacity: 0; margin: -34px 0 0 14px; transform: scale(1.2) } }
 
   /* Stop button */
   #stop {
@@ -148,14 +65,14 @@
     font: 800 24px/1 -apple-system, system-ui, sans-serif; letter-spacing: .12em;
     box-shadow: 0 8px 0 #9c3532, 0 14px 24px rgba(0,0,0,.25);
     transform: translateY(220%); transition: transform .9s cubic-bezier(.2,.8,.2,1);
-    touch-action: manipulation; cursor: pointer;
+    touch-action: manipulation; cursor: pointer; z-index: 2;
   }
   #stop.show { transform: translateY(0); }
   #stop:active { box-shadow: 0 3px 0 #9c3532; margin-top: 5px; }
   #stop:disabled { background: #7b6f64; box-shadow: 0 8px 0 #5a5047; color: #e7ddd2; cursor: default; }
 
   #restart {
-    position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 16px); text-align: center;
+    position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 16px); text-align: center; z-index: 6;
     color: var(--muted); font-size: 15px; text-decoration: underline; opacity: 0; pointer-events: none; transition: opacity .6s;
   }
   #restart.show { opacity: 1; pointer-events: auto; }
@@ -172,7 +89,7 @@
   #intro p { margin: 0; opacity: .75; font-size: 16px; max-width: 260px; }
   #intro .go { margin-top: 18px; padding: 14px 30px; border-radius: 99px; background: var(--card); color: #f8ecd6; font-weight: 700; font-size: 17px; }
 
-  #debug { position: absolute; left: 6px; bottom: 4px; font: 11px/1.3 ui-monospace, monospace; color: var(--muted); white-space: pre; pointer-events: none; }
+  #debug { position: absolute; left: 6px; bottom: 4px; font: 11px/1.3 ui-monospace, monospace; color: var(--muted); white-space: pre; pointer-events: none; z-index: 7; }
 </style>
 </head>
 <body>
@@ -186,69 +103,10 @@
   <div id="grip" aria-hidden="true"><span></span></div>
   <div id="hint">Shake the phone to wake him up</div>
 
-  <div id="sloth" class="s-sleep">
-    <div id="zzz">z z Z</div>
-    <div id="slothInner">
-      <svg viewBox="0 0 260 150" aria-label="A sleepy sloth">
-        <defs>
-          <radialGradient id="gBody" cx=".45" cy=".25" r=".85"><stop offset="0" stop-color="#bfa27c"/><stop offset=".5" stop-color="#8f6f4e"/><stop offset="1" stop-color="#5a4130"/></radialGradient>
-          <radialGradient id="gHead" cx=".45" cy=".3" r=".8"><stop offset="0" stop-color="#b79a74"/><stop offset=".6" stop-color="#8a6a4b"/><stop offset="1" stop-color="#5e4430"/></radialGradient>
-          <radialGradient id="gFace" cx=".5" cy=".4" r=".65"><stop offset="0" stop-color="#f3e6c9"/><stop offset="1" stop-color="#d8c29b"/></radialGradient>
-          <linearGradient id="gLimb" x1="0" x2="1"><stop offset="0" stop-color="#9a7a57"/><stop offset="1" stop-color="#5e4430"/></linearGradient>
-          <linearGradient id="gClaw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfae92"/><stop offset="1" stop-color="#f4ead4"/></linearGradient>
-        </defs>
-
-        <!-- far-side limbs (darker, behind the body) -->
-        <g transform="translate(78,104)"><g class="arm far b">
-          <path d="M0 0 C5 14 -3 28 2 40" stroke="#4a3626" stroke-width="14" stroke-linecap="round" fill="none"/>
-          <g class="claws" stroke="url(#gClaw)" stroke-width="3" stroke-linecap="round" fill="none"><path d="M-4 40 q-3 8 -1 12"/><path d="M2 42 q0 9 2 13"/><path d="M8 40 q3 7 5 10"/></g>
-        </g></g>
-        <g transform="translate(150,104)"><g class="arm far">
-          <path d="M0 0 C-4 14 4 28 -1 40" stroke="#4a3626" stroke-width="14" stroke-linecap="round" fill="none"/>
-          <g class="claws" stroke="url(#gClaw)" stroke-width="3" stroke-linecap="round" fill="none"><path d="M-7 40 q-3 8 -1 12"/><path d="M-1 42 q0 9 2 13"/><path d="M5 40 q3 7 5 10"/></g>
-        </g></g>
-
-        <!-- body -->
-        <g class="body-g">
-          <path id="bodyShape" fill="url(#gBody)" stroke="#6a4f37" stroke-width="2" stroke-linejoin="round"/>
-          <g id="furBody" fill="none" stroke-linecap="round"></g>
-        </g>
-
-        <!-- near-side limbs hanging over the front of the timer -->
-        <g transform="translate(60,106)"><g class="arm b">
-          <path d="M0 0 C6 14 -4 30 2 44" stroke="url(#gLimb)" stroke-width="16" stroke-linecap="round" fill="none"/>
-          <path d="M-3 4 C2 16 -6 30 -1 42" stroke="#c4a67d" stroke-opacity=".28" stroke-width="4" stroke-linecap="round" fill="none"/>
-          <g class="claws" stroke="url(#gClaw)" stroke-width="3.2" stroke-linecap="round" fill="none"><path d="M-5 44 q-3 9 -1 14"/><path d="M2 46 q0 10 2 15"/><path d="M9 44 q3 8 6 11"/></g>
-        </g></g>
-        <g transform="translate(166,108)"><g class="arm">
-          <path d="M0 0 C-5 14 5 30 -1 44" stroke="url(#gLimb)" stroke-width="16" stroke-linecap="round" fill="none"/>
-          <path d="M-3 4 C-8 16 2 30 -3 42" stroke="#c4a67d" stroke-opacity=".28" stroke-width="4" stroke-linecap="round" fill="none"/>
-          <g class="claws" stroke="url(#gClaw)" stroke-width="3.2" stroke-linecap="round" fill="none"><path d="M-8 44 q-3 9 -1 14"/><path d="M-1 46 q0 10 2 15"/><path d="M6 44 q3 8 6 11"/></g>
-        </g></g>
-
-        <!-- head -->
-        <g class="head-w"><g class="head-g">
-          <path id="headShape" fill="url(#gHead)" stroke="#6a4f37" stroke-width="2" stroke-linejoin="round"/>
-          <g id="furHead" fill="none" stroke-linecap="round"></g>
-          <ellipse cx="216" cy="90" rx="19" ry="16.5" fill="url(#gFace)"/>
-          <!-- dark eye stripes -->
-          <ellipse cx="206" cy="88" rx="4.6" ry="9.5" transform="rotate(14 206 88)" fill="#634a35"/>
-          <ellipse cx="227" cy="88" rx="4.6" ry="9.5" transform="rotate(-14 227 88)" fill="#634a35"/>
-          <g class="eye l fx"><ellipse cx="206.5" cy="87" rx="3.4" ry="4" fill="#150e09" stroke="#150e09" stroke-width="1.2"/><circle cx="207.8" cy="85.6" r="1.2" fill="#fff"/></g>
-          <g class="eye r fx"><ellipse cx="226.5" cy="87" rx="3.4" ry="4" fill="#150e09" stroke="#150e09" stroke-width="1.2"/><circle cx="227.8" cy="85.6" r="1.2" fill="#fff"/></g>
-          <g class="brows-a" stroke="#2a1d14" stroke-width="2.6" stroke-linecap="round"><path d="M198 79 L211 84"/><path d="M235 79 L222 84"/></g>
-          <g class="brows-w" stroke="#2a1d14" stroke-width="2.4" stroke-linecap="round"><path d="M199 83 L211 77"/><path d="M234 83 L222 77"/></g>
-          <ellipse class="nose" cx="216.5" cy="94" rx="4.2" ry="3" fill="#2a1d14"/>
-          <ellipse class="mouth" cx="216.5" cy="103" rx="5" ry="5" fill="#4d2424"/>
-          <path d="M209 99.5 Q216.5 105.5 224 99.5" stroke="#3a281b" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-          <g class="teeth"><rect x="209.5" y="98.5" width="14" height="6.5" rx="2.2" fill="#f7efdc" stroke="#3a281b" stroke-width="1.4"/><path d="M214.2 98.8v6M218.8 98.8v6" stroke="#3a281b" stroke-width="1"/></g>
-          <path class="sweat" d="M232 70 q3.5 5 0 8 q-3.5 -3 0 -8z" fill="#8fd0f0" stroke="#4c9cc4" stroke-width=".8"/>
-        </g></g>
-      </svg>
-    </div>
-  </div>
-
   <button id="stop" type="button">STOP</button>
+
+  <canvas id="gl" aria-label="A sleepy sloth"></canvas>
+  <div id="zzz">z z Z</div>
   <div id="debug"></div>
 
   <div id="intro">
@@ -258,243 +116,277 @@
   </div>
 </div>
 
-<script>
-(() => {
-  const $ = id => document.getElementById(id);
-  const card = $('card'), timeEl = $('time'), hint = $('hint'), sloth = $('sloth');
-  const stopBtn = $('stop'), restartEl = $('restart'), intro = $('intro'), dbg = $('debug');
-  const DEBUG = /[?&]debug/.test(location.search);
+<script type="module">
+const $ = id => document.getElementById(id);
+const card = $('card'), timeEl = $('time'), hint = $('hint'), zzz = $('zzz');
+const stopBtn = $('stop'), restartEl = $('restart'), intro = $('intro'), dbg = $('debug');
+const DEBUG = /[?&]debug/.test(location.search);
 
-  /* ---------- Fur (generated once, seeded so he looks the same every time) ---------- */
-  (function buildFur() {
-    const NS = 'http://www.w3.org/2000/svg';
-    let seed = 7; const r = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    const jag = (cx, cy, rx, ry, n, amp) => {
-      let d = '';
-      for (let i = 0; i < n; i++) {
-        const a = i / n * Math.PI * 2, k = 1 + (i % 2 ? amp : -amp * .4) * (.6 + r() * .8);
-        d += (i ? 'L' : 'M') + (cx + Math.cos(a) * rx * k).toFixed(1) + ' ' + (cy + Math.sin(a) * ry * k).toFixed(1);
-      }
-      return d + 'Z';
-    };
-    const strokes = (g, cx, cy, rx, ry, n, len, cols, dirFn) => {
-      for (let i = 0; i < n; i++) {
-        let u, w; do { u = r() * 2 - 1; w = r() * 2 - 1; } while (u * u + w * w > .92);
-        const px = cx + u * rx, py = cy + w * ry, a = dirFn(px, py) + (r() - .5) * .7, l = len * (.6 + r() * .8);
-        const p = document.createElementNS(NS, 'path');
-        p.setAttribute('d', `M${px.toFixed(1)} ${py.toFixed(1)}q${(Math.cos(a) * l * .5 + 1).toFixed(1)} ${(Math.sin(a) * l * .5 - 1.5).toFixed(1)} ${(Math.cos(a) * l).toFixed(1)} ${(Math.sin(a) * l).toFixed(1)}`);
-        p.setAttribute('stroke', cols[Math.floor(r() * cols.length)]);
-        p.setAttribute('stroke-width', (1 + r() * .9).toFixed(1));
-        p.setAttribute('stroke-opacity', (.35 + r() * .4).toFixed(2));
-        g.appendChild(p);
-      }
-    };
-    $('bodyShape').setAttribute('d', jag(122, 94, 98, 28, 70, .07));
-    $('headShape').setAttribute('d', jag(212, 88, 28, 27, 36, .09));
-    strokes($('furBody'), 122, 94, 90, 24, 260, 9, ['#4f3a29', '#6a4f37', '#c9ae86', '#d8c19b'], () => Math.PI * .88);
-    strokes($('furHead'), 212, 88, 25, 24, 70, 6, ['#4f3a29', '#6a4f37', '#c9ae86'], (x, y) => Math.atan2(y - 90, x - 214));
-  })();
+/* ---------- 3D sloth (optional: the timer still works if WebGL / the CDN is unavailable) ---------- */
+let sloth = null, LIFT = 24;
+try {
+  const mod = await import('./sloth/index.js');
+  LIFT = mod.LIFT;
+  sloth = mod.createSloth($('gl'));
+} catch (err) {
+  console.error('Sloth failed to load', err);
+  hint.textContent = 'The sloth could not be loaded (needs WebGL). The timer still works.';
+}
 
-  /* ---------- Timer (count up, starts on load) ---------- */
-  let t0 = performance.now(), frozen = null;
-  const pad = n => String(n).padStart(2, '0');
-  function fmt(ms) {
-    const cs = Math.floor(ms / 10) % 100, s = Math.floor(ms / 1000) % 60,
-          m = Math.floor(ms / 60000) % 60, h = Math.floor(ms / 3600000);
-    return (h ? h + ':' : '') + pad(m) + ':' + pad(s) + '<small>.' + pad(cs) + '</small>';
-  }
+/* ---------- Timer (count up, starts on load) ---------- */
+let t0 = performance.now(), frozen = null;
+const pad = n => String(n).padStart(2, '0');
+function fmt(ms) {
+  const cs = Math.floor(ms / 10) % 100, s = Math.floor(ms / 1000) % 60,
+        m = Math.floor(ms / 60000) % 60, h = Math.floor(ms / 3600000);
+  return (h ? h + ':' : '') + pad(m) + ':' + pad(s) + '<small>.' + pad(cs) + '</small>';
+}
 
-  /* ---------- State ---------- */
-  // intro -> sleeping -> waking -> awake -> falling -> landed -> stopped (stop can also happen earlier)
-  let state = 'intro';
-  let x = 0, v = 0, rot = 0, extraY = 0;       // x offset from card centre (px)
-  let tilt = 0, rawTilt = 0, manualTilt = 0;
-  let grip = 1, wasFighting = false;
-  const gripEl = $('grip'), gripFill = gripEl.firstElementChild;   // degrees, left/right
-  let fall = null;
-  const setCls = (...c) => { sloth.className = c.join(' '); };
-  const setHint = (txt) => { hint.style.opacity = 0; setTimeout(() => { hint.textContent = txt; hint.style.opacity = 1; }, 300); };
+/* ---------- State ---------- */
+// intro -> sleeping -> waking -> awake -> (dangling -> awake | falling) -> landed -> stopped
+let state = 'intro', stateT = 0;
+let x = 0, v = 0, rot = 0;                    // x offset from card centre (px)
+let tilt = 0, rawTilt = 0, manualTilt = 0;
+let grip = 1, wasFighting = false, lastPull = 0, shakeUntil = 0;
+const gripEl = $('grip'), gripFill = gripEl.firstElementChild;
+let fall = null, dang = null;
+const cur = { cx: 0, cy: 0, rot: 0 };         // latest rendered body pose (so a fall starts where he let go)
+const setHint = (txt) => { hint.style.opacity = 0; setTimeout(() => { hint.textContent = txt; hint.style.opacity = 1; }, 300); };
 
-  function enter(s) {
-    state = s;
-    if (s === 'sleeping') { setCls('s-sleep'); }
-    if (s === 'waking')   { setCls('s-wake'); setHint('mmm… he is waking up'); setTimeout(() => state === 'waking' && enter('awake'), 3000); }
-    if (s === 'awake')    { setCls('s-awake'); setHint('Tilt the phone to slide him off'); v = 0; grip = 1; wasFighting = false; gripEl.classList.add('show'); }
-    if (s === 'falling')  { gripEl.classList.remove('show'); setCls('s-fall'); startFall(); setHint(''); }
-    if (s === 'landed')   {
-      setCls('s-awake', 's-squash'); setHint(frozen === null ? 'Press STOP to stop the timer' : '');
-    }
-  }
-
-  /* ---------- Idle lazy moves while asleep ---------- */
-  const lazy = ['s-droop', 's-stir', 's-stretch'];
-  (function scheduleLazy() {
-    setTimeout(() => {
-      if (state === 'sleeping') {
-        const c = lazy[Math.floor(Math.random() * lazy.length)];
-        sloth.classList.add(c);
-        setTimeout(() => sloth.classList.remove(c), 6200);
-      }
-      scheduleLazy();
-    }, 8000 + Math.random() * 7000);
-  })();
-
-  /* ---------- Sensors ---------- */
-  let lastMag = null, shakeHits = [], lastStir = 0;
-  function onMotion(e) {
-    const a = e.accelerationIncludingGravity; if (!a || a.x == null) return;
-    const mag = Math.hypot(a.x, a.y, a.z);
-    if (lastMag !== null) {
-      const d = Math.abs(mag - lastMag), now = performance.now();
-      if (d > 14) { shakeHits.push(now); shakeHits = shakeHits.filter(t => now - t < 1000); if (shakeHits.length >= 3) { shakeHits = []; wake(); } }
-      else if (d > 6 && state === 'sleeping' && now - lastStir > 6000) { lastStir = now; sloth.classList.add('s-stir'); setTimeout(() => sloth.classList.remove('s-stir'), 4600); }
-    }
-    lastMag = mag;
-  }
-  function onOrient(e) { if (e.gamma != null) rawTilt = e.gamma; }
-  addEventListener('devicemotion', onMotion);
-  addEventListener('deviceorientation', onOrient);
-
-  async function enableSensors() {
-    try {
-      const reqs = [];
-      if (window.DeviceMotionEvent && DeviceMotionEvent.requestPermission) reqs.push(DeviceMotionEvent.requestPermission());
-      if (window.DeviceOrientationEvent && DeviceOrientationEvent.requestPermission) reqs.push(DeviceOrientationEvent.requestPermission());
-      await Promise.all(reqs);
-    } catch (_) { /* denied: fallbacks (double-tap / keys / drag) still work */ }
-  }
-
-  function wake() { if (state === 'sleeping') enter('waking'); }
-
-  /* ---------- Fallback controls ---------- */
-  intro.addEventListener('click', () => { enableSensors(); intro.classList.add('gone'); if (state === 'intro') enter('sleeping'); setHint('Shake the phone to wake him up'); });
-  addEventListener('dblclick', wake);
-  let lastTap = 0;
-  addEventListener('pointerdown', e => {
-    if (e.target === stopBtn) return;
-    const n = performance.now(); if (n - lastTap < 350) wake(); lastTap = n;
-  });
-  const keys = {};
-  addEventListener('keydown', e => {
-    if (e.key === 'ArrowLeft') keys.l = 1; if (e.key === 'ArrowRight') keys.r = 1;
-    if (e.key === ' ' || e.key === 'w') wake();
-    manualTilt = (keys.r ? 28 : 0) - (keys.l ? 28 : 0);
-  });
-  addEventListener('keyup', e => {
-    if (e.key === 'ArrowLeft') keys.l = 0; if (e.key === 'ArrowRight') keys.r = 0;
-    manualTilt = (keys.r ? 28 : 0) - (keys.l ? 28 : 0);
-  });
-  let dragX0 = null;
-  addEventListener('pointerdown', e => { if (e.target !== stopBtn) dragX0 = e.clientX; });
-  addEventListener('pointermove', e => { if (dragX0 !== null && e.pointerType === 'mouse' && e.buttons) manualTilt = Math.max(-30, Math.min(30, (e.clientX - dragX0) / 3)); });
-  addEventListener('pointerup', () => { dragX0 = null; manualTilt = (keys.r ? 28 : 0) - (keys.l ? 28 : 0); });
-
-  /* ---------- STOP / Restart ---------- */
-  stopBtn.addEventListener('click', () => {
-    if (frozen !== null) return;
-    frozen = performance.now() - t0;
-    timeEl.innerHTML = fmt(frozen);
-    card.classList.add('stopped');
-    stopBtn.disabled = true; stopBtn.textContent = 'STOPPED';
-    restartEl.classList.add('show');
-    if (state === 'landed') setHint('');
-  });
-  restartEl.addEventListener('click', () => {
-    frozen = null; t0 = performance.now(); fall = null; grip = 1; x = 0; v = 0; rot = 0; extraY = 0;
-    card.classList.remove('stopped'); stopBtn.disabled = false; stopBtn.textContent = 'STOP';
-    stopBtn.classList.remove('show'); restartEl.classList.remove('show');
-    enter('sleeping'); setHint('Shake the phone to wake him up');
-  });
-
-  /* ---------- Geometry ---------- */
-  function restPoint() { const r = card.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + 12, half: r.width / 2 }; }
-  function buttonPoint() { // where the stop button will sit once shown
-    const r = stopBtn.getBoundingClientRect(); const off = stopBtn.classList.contains('show') ? 0 : 0;
-    return { x: r.left + r.width / 2, y: r.top - off + 4 };
-  }
-
-  function startFall() {
-    const p = restPoint();
-    // button's final rect (transform removed): compute from layout, not current transform
-    const bottomGap = parseFloat(getComputedStyle(stopBtn).bottom);
-    const bh = stopBtn.offsetHeight, ah = document.getElementById('app').clientHeight;
-    const bw = stopBtn.offsetWidth;
-    const btnTop = ah - bottomGap - bh;
+function enter(s) {
+  state = s; stateT = 0;
+  if (s === 'sleeping') { fall = null; dang = null; }
+  if (s === 'waking')   { setHint('mmm… he is waking up'); setTimeout(() => state === 'waking' && enter('awake'), 3000); }
+  if (s === 'awake')    { setHint('Tilt the phone to slide him off'); v = 0; grip = 1; wasFighting = false; gripEl.classList.add('show'); }
+  if (s === 'dangling') {
     const dir = x >= 0 ? 1 : -1;
-    fall = { t0: performance.now(), dur: 2400, x0: p.x + x, y0: p.y, x1: innerWidth / 2, y1: btnTop + 4, dir };
+    dang = { dir, t: 0, blend: 0, sw: dir * 0.35, swv: dir * 1.6, level: 0, rescue: false, rt: 0, releasing: false, relT: 0, x0: x, xr: dir * (restPoint().half - 46) };
+    grip = Math.max(grip, 0.85); setHint("He's hanging on by one claw! Level the phone to save him");
   }
+  if (s === 'falling')  { gripEl.classList.remove('show'); startFall(); setHint(''); }
+  if (s === 'landed')   { setHint(frozen === null ? 'Press STOP to stop the timer' : ''); }
+}
 
-  /* ---------- Main loop ---------- */
-  let last = performance.now();
-  function frame(now) {
-    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+/* ---------- Sensors ---------- */
+let lastMag = null, shakeHits = [], lastStir = 0;
+function onMotion(e) {
+  const a = e.accelerationIncludingGravity; if (!a || a.x == null) return;
+  const mag = Math.hypot(a.x, a.y, a.z);
+  if (lastMag !== null) {
+    const d = Math.abs(mag - lastMag), now = performance.now();
+    if (d > 14) { shakeHits.push(now); shakeHits = shakeHits.filter(t => now - t < 1000); if (shakeHits.length >= 3) { shakeHits = []; wake(); } }
+    else if (d > 6 && state === 'sleeping' && now - lastStir > 6000) { lastStir = now; shakeUntil = now + 4000; }
+  }
+  lastMag = mag;
+}
+function onOrient(e) { if (e.gamma != null) rawTilt = e.gamma; }
+addEventListener('devicemotion', onMotion);
+addEventListener('deviceorientation', onOrient);
 
-    // timer
-    if (frozen === null) timeEl.innerHTML = fmt(now - t0);
+async function enableSensors() {
+  try {
+    const reqs = [];
+    if (window.DeviceMotionEvent && DeviceMotionEvent.requestPermission) reqs.push(DeviceMotionEvent.requestPermission());
+    if (window.DeviceOrientationEvent && DeviceOrientationEvent.requestPermission) reqs.push(DeviceOrientationEvent.requestPermission());
+    await Promise.all(reqs);
+  } catch (_) { /* denied: fallbacks (double-tap / keys / drag) still work */ }
+}
 
-    // tilt smoothing (low-pass) – the sloth is lazy about everything
-    const target = manualTilt || rawTilt;
-    tilt += (target - tilt) * Math.min(1, dt * 3);
+function wake() { if (state === 'sleeping') enter('waking'); }
 
-    const p = restPoint();
-    let px = p.x + x, py = p.y;
+/* ---------- Fallback controls ---------- */
+intro.addEventListener('click', () => { enableSensors(); intro.classList.add('gone'); if (state === 'intro') enter('sleeping'); setHint('Shake the phone to wake him up'); });
+addEventListener('dblclick', wake);
+let lastTap = 0;
+addEventListener('pointerdown', e => {
+  if (e.target === stopBtn) return;
+  const n = performance.now(); if (n - lastTap < 350) wake(); lastTap = n;
+});
+const keys = {};
+addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft') keys.l = 1; if (e.key === 'ArrowRight') keys.r = 1;
+  if (e.key === ' ' || e.key === 'w') wake();
+  manualTilt = (keys.r ? 28 : 0) - (keys.l ? 28 : 0);
+});
+addEventListener('keyup', e => {
+  if (e.key === 'ArrowLeft') keys.l = 0; if (e.key === 'ArrowRight') keys.r = 0;
+  manualTilt = (keys.r ? 28 : 0) - (keys.l ? 28 : 0);
+});
+let dragX0 = null;
+addEventListener('pointerdown', e => { if (e.target !== stopBtn) dragX0 = e.clientX; });
+addEventListener('pointermove', e => { if (dragX0 !== null && e.pointerType === 'mouse' && e.buttons) manualTilt = Math.max(-30, Math.min(30, (e.clientX - dragX0) / 3)); });
+addEventListener('pointerup', () => { dragX0 = null; manualTilt = (keys.r ? 28 : 0) - (keys.l ? 28 : 0); });
 
-    if (state === 'awake') {
-      const dead = 8, over = Math.abs(tilt) - dead;
-      const dir = Math.sign(tilt);
-      let force = 0, fighting = false, panic = false;
-      if (over > 0) {
-        // He fights back: the grip drains while you keep tilting, and he surges against you in pulses.
-        grip = Math.max(0, grip - dt * (0.07 + over * 0.01));
-        const resist = grip * (0.88 + 0.12 * Math.sin(now / 140));
-        force = dir * over * 7 * (1.05 - resist * 0.9) - x * 2.2 * resist;
-        fighting = grip > 0.3; panic = !fighting;
-      } else {
-        grip = Math.min(1, grip + dt * 0.22);             // he recovers when you stop
-        force = -x * 0.8;                                 // claws grip: drifts back to the middle
-      }
-      sloth.classList.toggle('s-fight', fighting);
-      sloth.classList.toggle('s-panic', panic);
-      if (fighting && !wasFighting) setHint('He is holding on! Keep tilting!');
-      if (!fighting && !panic && wasFighting) setHint('Tilt the phone to slide him off');
-      wasFighting = fighting || panic;
-      v += (force - v * 2.6) * dt;
-      x += v * dt;
-      const effort = over > 0 ? 0.4 + (1 - grip) * 0.6 : 0;
-      const rotTarget = over > 0 ? (-dir * 9 * grip + dir * 10 * (1 - grip)) : tilt * 0.35;
-      rot += (rotTarget - rot) * Math.min(1, dt * 3);
-      gripFill.style.width = (grip * 100).toFixed(0) + '%';
-      if (Math.abs(x) > p.half - 10) enter('falling');
-      px = p.x + x + (Math.random() - .5) * 5 * effort * (fighting ? 1 : 1.6);
-      py = p.y + (Math.random() - .5) * 2.4 * effort;
-    } else if (state === 'falling' && fall) {
-      const t = Math.min(1, (now - fall.t0) / fall.dur);
-      const ey = t * t * (0.6 + 0.4 * t);                 // slow start, floaty accel
-      const ex = 1 - Math.pow(1 - t, 2);
-      px = fall.x0 + (fall.x1 - fall.x0) * ex;
-      py = fall.y0 + (fall.y1 - fall.y0) * ey;
-      rot = fall.dir * 28 * Math.sin(t * Math.PI * 0.95) + (1 - t) * fall.dir * 6;
-      if (t > 0.5 && !stopBtn.classList.contains('show')) stopBtn.classList.add('show');
-      if (t >= 1) { rot = 0; enter('landed'); }
-    } else if (state === 'landed') {
-      const b = buttonPoint();
-      px = innerWidth / 2; py = b.y; rot += (0 - rot) * Math.min(1, dt * 4);
+/* ---------- STOP / Restart ---------- */
+stopBtn.addEventListener('click', () => {
+  if (frozen !== null) return;
+  frozen = performance.now() - t0;
+  timeEl.innerHTML = fmt(frozen);
+  card.classList.add('stopped');
+  stopBtn.disabled = true; stopBtn.textContent = 'STOPPED';
+  restartEl.classList.add('show');
+  if (state === 'landed') setHint('');
+});
+restartEl.addEventListener('click', () => {
+  frozen = null; t0 = performance.now(); fall = null; dang = null; grip = 1; x = 0; v = 0; rot = 0;
+  card.classList.remove('stopped'); stopBtn.disabled = false; stopBtn.textContent = 'STOP';
+  stopBtn.classList.remove('show'); restartEl.classList.remove('show');
+  sloth && sloth.reset();
+  enter('sleeping'); setHint('Shake the phone to wake him up');
+});
+
+/* ---------- Geometry ---------- */
+function restPoint() { const r = card.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top, half: r.width / 2 }; }
+function buttonTop() { // top edge of the STOP button in its final (shown) position, from layout not transform
+  const bottomGap = parseFloat(getComputedStyle(stopBtn).bottom);
+  return $('app').clientHeight - bottomGap - stopBtn.offsetHeight;
+}
+function startFall() {
+  const btnTop = buttonTop();
+  fall = { t0: performance.now(), dur: 2400, x0: cur.cx, y0: cur.cy, x1: innerWidth / 2, y1: btnTop - LIFT + 4, dir: x >= 0 ? 1 : -1, rot0: cur.rot };
+}
+
+/* ---------- Main loop ---------- */
+let last = performance.now(), fps = 60;
+let pxPrev = null, pyPrev = null;
+const sm = t => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
+const lerp = (a, b, t) => a + (b - a) * t;
+
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  stateT += dt;
+  if (dt > 0) fps += (1 / dt - fps) * 0.05;
+
+  if (frozen === null) timeEl.innerHTML = fmt(now - t0);
+
+  // tilt smoothing (low-pass) – the sloth is lazy about everything
+  const target = manualTilt || rawTilt;
+  tilt += (target - tilt) * Math.min(1, dt * 3);
+
+  const p = restPoint();
+  const surf = { cx: p.x, top: p.y, half: p.half };
+  let cx = p.x + x, cy = p.y - LIFT, rotOut = 0;
+  let level = 0, up = 0, gripOn = false, hang = null, releasing = false, squash = 1, slide = 0;
+  let shadow = { x: cx, y: p.y + 16, w: 220, h: 50, a: 0.4 };
+  let surface = surf;
+
+  if (state === 'awake') {
+    gripOn = true;
+    const dead = 8, over = Math.abs(tilt) - dead;
+    const dir = Math.sign(tilt);
+    let force = 0, fighting = false, panic = false;
+    let pullK;
+    if (over > 0) {
+      // He fights back: the grip drains while you keep tilting, and he surges against you in pulses.
+      grip = Math.max(0, grip - dt * (0.07 + over * 0.01));
+      const resist = grip * (0.88 + 0.12 * Math.sin(now / 140));
+      force = dir * over * 7 * (1.05 - resist * 0.9);
+      pullK = 2.2 * resist;
+      fighting = grip > 0.3; panic = !fighting;
+      up = -dir; slide = dir;
     } else {
-      rot += (0 - rot) * Math.min(1, dt * 3);
+      grip = Math.min(1, grip + dt * 0.22);             // he recovers when you stop
+      pullK = 2.2 * Math.max(0.5, grip);
+      if (Math.abs(x) > 6) up = -Math.sign(x);          // claws haul him hand-over-hand back toward the middle
     }
-
-    sloth.style.transform = `translate(${px.toFixed(1)}px, ${py.toFixed(1)}px) rotate(${rot.toFixed(2)}deg)`;
-    hint.style.top = (p.y + card.offsetHeight + 28) + 'px';
-    gripEl.style.top = (p.y + card.offsetHeight + 62) + 'px';
-
-    if (DEBUG) dbg.textContent = `state ${state}\ngamma ${rawTilt.toFixed(1)} tilt ${tilt.toFixed(1)}\nx ${x.toFixed(1)} v ${v.toFixed(1)}`;
-    requestAnimationFrame(frame);
+    level = panic ? 2 : fighting ? 1 : 0;
+    if (fighting && !wasFighting) setHint('He is holding on! Keep tilting!');
+    if (!fighting && !panic && wasFighting) setHint('Tilt the phone to slide him off');
+    wasFighting = fighting || panic;
+    force += pullK * lastPull;
+    v += (force - v * 2.6) * dt;
+    x += v * dt;
+    const effort = over > 0 ? 0.4 + (1 - grip) * 0.6 : 0;
+    const rotTarget = over > 0 ? (-dir * 6 * grip + dir * 8 * (1 - grip)) : tilt * 0.25;
+    rot += (rotTarget - rot) * Math.min(1, dt * 3);
+    gripFill.style.width = (grip * 100).toFixed(0) + '%';
+    if (Math.abs(x) > p.half - 14) enter('dangling');
+    cx = p.x + x + (Math.random() - .5) * 4 * effort * (fighting ? 1 : 1.6);
+    cy = p.y - LIFT + (Math.random() - .5) * 2.2 * effort;
+    rotOut = rot;
+    shadow.x = p.x + x;
+  } else if (state === 'dangling' && dang) {
+    const D = dang; D.t += dt;
+    level = 2;
+    if (!D.rescue) {
+      D.blend = Math.min(1, D.blend + dt / 0.7);
+      D.swv += (-18 * Math.sin(D.sw) - 1.1 * D.swv + tilt * 0.035 + (Math.random() - .5) * 0.5) * dt;
+      D.sw = Math.max(-1.2, Math.min(1.2, D.sw + D.swv * dt));
+      const tiltOn = Math.abs(tilt) > 9;
+      if (tiltOn) { D.level = Math.max(0, D.level - dt * 1.5); grip = Math.max(0, grip - dt * 0.2); }
+      else { D.level += dt; grip = Math.min(1, grip + dt * 0.1); }
+      if (D.level > 1.1) { D.rescue = true; D.rt = 0; setHint('Phew… he is hauling himself back up'); }
+      else if (grip <= 0.1 && !D.releasing) { D.releasing = true; D.relT = 0; }
+      if (D.releasing) { D.relT += dt; if (D.relT > 0.5) enter('falling'); }
+    } else {
+      D.rt += dt; D.blend = Math.max(0, 1 - D.rt / 0.9);
+      if (D.rt >= 0.9) { x = D.xr; v = 0; rot = 0; enter('awake'); grip = 0.45; }
+    }
+    if (state === 'dangling') {
+      const e = sm(D.blend);
+      const pivot = { x: p.x + D.dir * p.half, y: p.y + 4 };
+      const Lh = 96;
+      const hcx = pivot.x - D.dir * 38 + Lh * Math.sin(D.sw), hcy = pivot.y + Lh * Math.cos(D.sw);
+      const hrot = -90 - D.sw * 180 / Math.PI;
+      const xa = D.rescue ? D.xr : D.x0;
+      cx = lerp(p.x + xa, hcx, e); cy = lerp(p.y - LIFT, hcy, e); rotOut = lerp(0, hrot, e);
+      hang = { x: pivot.x, y: pivot.y + 6 };
+      releasing = D.releasing;
+      gripFill.style.width = (grip * 100).toFixed(0) + '%';
+      shadow = { x: p.x + xa, y: p.y + 16, w: 220, h: 50, a: 0.4 * (1 - e) };
+    }
+  } else if (state === 'falling' && fall) {
+    level = 2;
+    const t = Math.min(1, (now - fall.t0) / fall.dur);
+    const ey = t * t * (0.6 + 0.4 * t);                 // slow start, floaty accel
+    const ex = 1 - Math.pow(1 - t, 2);
+    cx = fall.x0 + (fall.x1 - fall.x0) * ex;
+    cy = fall.y0 + (fall.y1 - fall.y0) * ey;
+    rotOut = fall.dir * 28 * Math.sin(t * Math.PI * 0.95) + (1 - t) * fall.rot0;
+    rot = rotOut;
+    shadow.a = 0;
+    if (t > 0.5 && !stopBtn.classList.contains('show')) stopBtn.classList.add('show');
+    if (t >= 1) { rot = 0; enter('landed'); }
+  } else if (state === 'landed') {
+    const bt = buttonTop();
+    cx = innerWidth / 2; cy = bt - LIFT + 4;
+    surface = { cx: innerWidth / 2, top: bt, half: stopBtn.offsetWidth / 2 };
+    rot += (0 - rot) * Math.min(1, dt * 4); rotOut = rot;
+    squash = 1 - 0.2 * Math.exp(-stateT * 4.5) * Math.cos(stateT * 8);
+    shadow = { x: cx, y: bt + 14, w: 200, h: 40, a: 0.3 };
+  } else {
+    rot += (0 - rot) * Math.min(1, dt * 3); rotOut = rot;
+    cx = p.x + x;
   }
-  requestAnimationFrame(frame);
 
-  // expose for testing
-  window.__slowth = { get state() { return state; }, wake };
-})();
+  cur.cx = cx; cur.cy = cy; cur.rot = rotOut;
+  const vx = pxPrev === null ? 0 : (cx - pxPrev) / Math.max(dt, 1e-3), vy = pyPrev === null ? 0 : (cy - pyPrev) / Math.max(dt, 1e-3);
+  pxPrev = cx; pyPrev = cy;
+
+  if (sloth) {
+    const out = sloth.update(dt, {
+      state, cx, cy, rot: rotOut, squash, surface, shadow,
+      up, slide, level, tilt, gripOn, hang, releasing, dir: dang ? dang.dir : 1,
+      vx, vy, shakeStir: now < shakeUntil,
+    });
+    lastPull = out.pull;
+    zzz.classList.toggle('on', state === 'sleeping' || (state === 'landed' && stateT > 4));
+    zzz.style.left = (out.head.x + 14).toFixed(0) + 'px'; zzz.style.top = (out.head.y - 32).toFixed(0) + 'px';
+  }
+
+  hint.style.top = (p.y + card.offsetHeight + 28) + 'px';
+  gripEl.style.top = (p.y + card.offsetHeight + 62) + 'px';
+
+  if (DEBUG) dbg.textContent = `state ${state}  fps ${fps.toFixed(0)}\ntilt ${tilt.toFixed(1)} grip ${grip.toFixed(2)}\nx ${x.toFixed(1)} v ${v.toFixed(1)} pull ${lastPull.toFixed(1)}`;
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+// expose for testing
+window.__slowth = {
+  get state() { return state; }, get grip() { return grip; }, get x() { return x; }, get fps() { return fps; },
+  get dang() { return dang; }, wake, setTilt(d) { manualTilt = d; }, setX(nx) { x = nx; v = 0; },
+};
 </script>
 </body>
 </html>
