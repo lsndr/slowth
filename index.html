@@ -42,6 +42,9 @@
   #time small { font-size: .55em; opacity: .7; }
   #card.stopped #time { color: #ffd37a; }
 
+  #grip { position: absolute; left: 50%; width: 120px; margin-left: -60px; height: 6px; border-radius: 3px; background: rgba(127,127,127,.28); opacity: 0; transition: opacity .4s; overflow: hidden; }
+  #grip.show { opacity: 1; }
+  #grip span { display: block; height: 100%; width: 100%; background: var(--muted); border-radius: 3px; }
   #hint {
     position: absolute; left: 0; right: 0; top: calc(50% + 120px);
     text-align: center; color: var(--muted); font-size: 15px; padding: 0 24px;
@@ -99,11 +102,32 @@
   @keyframes blink { 0%,90%,100% { transform: scaleY(.95) } 94% { transform: scaleY(.1) } }
   .s-awake .body-g { animation-duration: 3.5s; }
 
-  .s-awake.s-tilting .arm   { animation: flail 1.1s ease-in-out infinite; }
-  .s-awake.s-tilting .arm.b { animation-delay: -.4s; }
+  /* Fighting back: determined face, trembling arms, claws dug in; then panic when the grip runs out */
+  .s-awake.s-fight .arm   { animation: tremble .14s linear infinite; }
+  .s-awake.s-fight .arm.b { animation-delay: -.07s; }
+  @keyframes tremble { 0%,100% { transform: rotate(-4deg) } 50% { transform: rotate(5deg) } }
+  .s-awake.s-fight .claws { animation: none; transform: rotate(14deg); }
+  .s-awake.s-fight .body-g { animation: strain .35s ease-in-out infinite; }
+  @keyframes strain { 0%,100% { transform: scale(1,1) } 50% { transform: scale(1.03,.96) } }
+  .s-awake.s-fight .head-g { animation: gritshake .12s linear infinite; }
+  @keyframes gritshake { 0%,100% { transform: rotate(-1.5deg) } 50% { transform: rotate(1.5deg) } }
+  .s-awake.s-fight .eye  { transform: scaleY(.55); animation: none; }
+  .s-awake.s-fight .mouth { transform: scaleY(.2); }
+  .s-awake.s-panic .arm   { animation: flail .55s ease-in-out infinite; }
+  .s-awake.s-panic .arm.b { animation-delay: -.25s; }
+  .s-awake.s-panic .eye   { transform: scaleY(1.25); animation: none; }
+  .s-awake.s-panic .mouth { transform: scaleY(.95); }
+  .s-awake.s-panic .head-g { animation: gritshake .2s linear infinite; }
+  .brows-a, .brows-w, .teeth, .sweat { opacity: 0; transition: opacity .15s; }
+  .s-fight .brows-a, .s-fight .teeth { opacity: 1; }
+  .s-panic .brows-w { opacity: 1; }
+  .s-fight .sweat, .s-panic .sweat { opacity: .85; animation: sweatdrop .9s ease-in infinite; }
+  .s-panic .sweat { animation-duration: .5s; }
+  .sweat { transform-box: fill-box; transform-origin: center; }
+  @keyframes sweatdrop { 0% { transform: translateY(-6px) scale(.6); opacity: 0 } 25% { opacity: .9 } 100% { transform: translateY(16px) scale(1); opacity: 0 } }
   .s-fall .eye    { transform: scaleY(1.15); animation: none; }
   .s-fall .mouth  { transform: scaleY(.85); }
-  .s-fall .claws, .s-awake.s-tilting .claws { animation: clawspread .5s ease-in-out infinite alternate; }
+  .s-fall .claws, .s-awake.s-panic .claws { animation: clawspread .5s ease-in-out infinite alternate; }
   @keyframes clawspread { from { transform: rotate(-14deg) } to { transform: rotate(14deg) } }
   .s-fall .arm    { animation: flail 1.6s ease-in-out infinite; }
   .s-fall .arm.b  { animation-delay: -.5s; }
@@ -159,6 +183,7 @@
     <div id="time">00:00<small>.00</small></div>
   </div>
 
+  <div id="grip" aria-hidden="true"><span></span></div>
   <div id="hint">Shake the phone to wake him up</div>
 
   <div id="sloth" class="s-sleep">
@@ -211,9 +236,13 @@
           <ellipse cx="227" cy="88" rx="4.6" ry="9.5" transform="rotate(-14 227 88)" fill="#634a35"/>
           <g class="eye l fx"><ellipse cx="206.5" cy="87" rx="3.4" ry="4" fill="#150e09" stroke="#150e09" stroke-width="1.2"/><circle cx="207.8" cy="85.6" r="1.2" fill="#fff"/></g>
           <g class="eye r fx"><ellipse cx="226.5" cy="87" rx="3.4" ry="4" fill="#150e09" stroke="#150e09" stroke-width="1.2"/><circle cx="227.8" cy="85.6" r="1.2" fill="#fff"/></g>
+          <g class="brows-a" stroke="#2a1d14" stroke-width="2.6" stroke-linecap="round"><path d="M198 79 L211 84"/><path d="M235 79 L222 84"/></g>
+          <g class="brows-w" stroke="#2a1d14" stroke-width="2.4" stroke-linecap="round"><path d="M199 83 L211 77"/><path d="M234 83 L222 77"/></g>
           <ellipse class="nose" cx="216.5" cy="94" rx="4.2" ry="3" fill="#2a1d14"/>
           <ellipse class="mouth" cx="216.5" cy="103" rx="5" ry="5" fill="#4d2424"/>
           <path d="M209 99.5 Q216.5 105.5 224 99.5" stroke="#3a281b" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+          <g class="teeth"><rect x="209.5" y="98.5" width="14" height="6.5" rx="2.2" fill="#f7efdc" stroke="#3a281b" stroke-width="1.4"/><path d="M214.2 98.8v6M218.8 98.8v6" stroke="#3a281b" stroke-width="1"/></g>
+          <path class="sweat" d="M232 70 q3.5 5 0 8 q-3.5 -3 0 -8z" fill="#8fd0f0" stroke="#4c9cc4" stroke-width=".8"/>
         </g></g>
       </svg>
     </div>
@@ -279,7 +308,9 @@
   // intro -> sleeping -> waking -> awake -> falling -> landed -> stopped (stop can also happen earlier)
   let state = 'intro';
   let x = 0, v = 0, rot = 0, extraY = 0;       // x offset from card centre (px)
-  let tilt = 0, rawTilt = 0, manualTilt = 0;   // degrees, left/right
+  let tilt = 0, rawTilt = 0, manualTilt = 0;
+  let grip = 1, wasFighting = false;
+  const gripEl = $('grip'), gripFill = gripEl.firstElementChild;   // degrees, left/right
   let fall = null;
   const setCls = (...c) => { sloth.className = c.join(' '); };
   const setHint = (txt) => { hint.style.opacity = 0; setTimeout(() => { hint.textContent = txt; hint.style.opacity = 1; }, 300); };
@@ -288,8 +319,8 @@
     state = s;
     if (s === 'sleeping') { setCls('s-sleep'); }
     if (s === 'waking')   { setCls('s-wake'); setHint('mmm… he is waking up'); setTimeout(() => state === 'waking' && enter('awake'), 3000); }
-    if (s === 'awake')    { setCls('s-awake'); setHint('Tilt the phone to slide him off'); v = 0; }
-    if (s === 'falling')  { sloth.classList.remove('s-tilting'); setCls('s-fall'); startFall(); setHint(''); }
+    if (s === 'awake')    { setCls('s-awake'); setHint('Tilt the phone to slide him off'); v = 0; grip = 1; wasFighting = false; gripEl.classList.add('show'); }
+    if (s === 'falling')  { gripEl.classList.remove('show'); setCls('s-fall'); startFall(); setHint(''); }
     if (s === 'landed')   {
       setCls('s-awake', 's-squash'); setHint(frozen === null ? 'Press STOP to stop the timer' : '');
     }
@@ -369,7 +400,7 @@
     if (state === 'landed') setHint('');
   });
   restartEl.addEventListener('click', () => {
-    frozen = null; t0 = performance.now(); fall = null; x = 0; v = 0; rot = 0; extraY = 0;
+    frozen = null; t0 = performance.now(); fall = null; grip = 1; x = 0; v = 0; rot = 0; extraY = 0;
     card.classList.remove('stopped'); stopBtn.disabled = false; stopBtn.textContent = 'STOP';
     stopBtn.classList.remove('show'); restartEl.classList.remove('show');
     enter('sleeping'); setHint('Shake the phone to wake him up');
@@ -410,15 +441,32 @@
 
     if (state === 'awake') {
       const dead = 8, over = Math.abs(tilt) - dead;
-      let force = 0;
-      if (over > 0) force = Math.sign(tilt) * over * 7;   // px/s² – slow
-      else force = -x * 0.8;                              // claws grip: drifts back to the middle
-      sloth.classList.toggle('s-tilting', over > 0);
+      const dir = Math.sign(tilt);
+      let force = 0, fighting = false, panic = false;
+      if (over > 0) {
+        // He fights back: the grip drains while you keep tilting, and he surges against you in pulses.
+        grip = Math.max(0, grip - dt * (0.07 + over * 0.01));
+        const resist = grip * (0.88 + 0.12 * Math.sin(now / 140));
+        force = dir * over * 7 * (1.05 - resist * 0.9) - x * 2.2 * resist;
+        fighting = grip > 0.3; panic = !fighting;
+      } else {
+        grip = Math.min(1, grip + dt * 0.22);             // he recovers when you stop
+        force = -x * 0.8;                                 // claws grip: drifts back to the middle
+      }
+      sloth.classList.toggle('s-fight', fighting);
+      sloth.classList.toggle('s-panic', panic);
+      if (fighting && !wasFighting) setHint('He is holding on! Keep tilting!');
+      if (!fighting && !panic && wasFighting) setHint('Tilt the phone to slide him off');
+      wasFighting = fighting || panic;
       v += (force - v * 2.6) * dt;
       x += v * dt;
-      rot += ((tilt * 0.35) - rot) * Math.min(1, dt * 2);
+      const effort = over > 0 ? 0.4 + (1 - grip) * 0.6 : 0;
+      const rotTarget = over > 0 ? (-dir * 9 * grip + dir * 10 * (1 - grip)) : tilt * 0.35;
+      rot += (rotTarget - rot) * Math.min(1, dt * 3);
+      gripFill.style.width = (grip * 100).toFixed(0) + '%';
       if (Math.abs(x) > p.half - 10) enter('falling');
-      px = p.x + x;
+      px = p.x + x + (Math.random() - .5) * 5 * effort * (fighting ? 1 : 1.6);
+      py = p.y + (Math.random() - .5) * 2.4 * effort;
     } else if (state === 'falling' && fall) {
       const t = Math.min(1, (now - fall.t0) / fall.dur);
       const ey = t * t * (0.6 + 0.4 * t);                 // slow start, floaty accel
@@ -437,6 +485,7 @@
 
     sloth.style.transform = `translate(${px.toFixed(1)}px, ${py.toFixed(1)}px) rotate(${rot.toFixed(2)}deg)`;
     hint.style.top = (p.y + card.offsetHeight + 28) + 'px';
+    gripEl.style.top = (p.y + card.offsetHeight + 62) + 'px';
 
     if (DEBUG) dbg.textContent = `state ${state}\ngamma ${rawTilt.toFixed(1)} tilt ${tilt.toFixed(1)}\nx ${x.toFixed(1)} v ${v.toFixed(1)}`;
     requestAnimationFrame(frame);
