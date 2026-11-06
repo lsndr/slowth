@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#f3e6cf">
+<title>Slowth</title>
+<style>
+  :root {
+    --bg: #f3e6cf;
+    --card: #3b2f26;
+    --card-text: #f8ecd6;
+    --muted: #8a7660;
+    --accent: #d9534f;
+    --fur: #8a6a4b;
+    --fur-dark: #6b4f36;
+    --fur-light: #b79a74;
+    --face: #ecdcbc;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #1f1a16; --card: #3b2f26; --muted: #a39078; }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; height: 100%; overflow: hidden; background: var(--bg);
+    touch-action: none; overscroll-behavior: none;
+    -webkit-user-select: none; user-select: none;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Rounded", "Segoe UI", system-ui, sans-serif;
+  }
+  #app { position: fixed; inset: 0; height: 100dvh; padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+
+  /* Timer card */
+  #card {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: min(86vw, 340px); padding: 34px 12px 30px;
+    background: var(--card); color: var(--card-text);
+    border-radius: 28px; text-align: center;
+    box-shadow: 0 14px 0 rgba(0,0,0,.12), 0 24px 40px rgba(0,0,0,.18);
+  }
+  #time { font-size: clamp(44px, 14vw, 62px); font-weight: 700; letter-spacing: .02em; font-variant-numeric: tabular-nums; line-height: 1; }
+  #time small { font-size: .55em; opacity: .7; }
+  #card.stopped #time { color: #ffd37a; }
+
+  #hint {
+    position: absolute; left: 0; right: 0; top: calc(50% + 120px);
+    text-align: center; color: var(--muted); font-size: 15px; padding: 0 24px;
+    transition: opacity .6s; min-height: 20px;
+  }
+
+  /* Sloth */
+  #sloth {
+    position: absolute; left: 0; top: 0; width: 240px; height: 130px;
+    margin: -126px 0 0 -120px; pointer-events: none; will-change: transform;
+    transform-origin: 50% 100%;
+  }
+  #sloth svg { width: 100%; height: 100%; overflow: visible; display: block; }
+  #slothInner { transform-origin: 50% 100%; }
+  #sloth .fx { transform-box: fill-box; transform-origin: center; }
+
+  .body-g   { transform-box: fill-box; transform-origin: 50% 100%; animation: breathe 6s ease-in-out infinite; }
+  .head-g   { transform-box: fill-box; transform-origin: 80% 90%; animation: headbob 7s ease-in-out infinite; }
+  .eye      { transform-box: fill-box; transform-origin: center; transform: scaleY(.08); }
+  .mouth    { transform-box: fill-box; transform-origin: center; transform: scaleY(0); }
+  .arm      { transform-box: fill-box; transform-origin: 50% 0%; }
+
+  @keyframes breathe  { 0%,100% { transform: scale(1,1) } 50% { transform: scale(1.015,1.04) } }
+  @keyframes headbob  { 0%,100% { transform: rotate(0) } 50% { transform: rotate(2.5deg) } }
+  @keyframes armsway  { 0%,100% { transform: rotate(0) } 50% { transform: rotate(5deg) } }
+  .arm { animation: armsway 7s ease-in-out infinite; }
+  .arm.b { animation-delay: -3s; }
+
+  /* Occasional lazy moves (JS toggles these classes) */
+  .s-droop .arm   { animation: armdroop 5s ease-in-out 1; }
+  @keyframes armdroop { 0%,100% { transform: rotate(0) } 45%,60% { transform: rotate(-14deg) } }
+  .s-stir .eye.l  { animation: stirEye 4.5s ease-in-out 1; }
+  @keyframes stirEye { 0%,100% { transform: scaleY(.08) } 40%,55% { transform: scaleY(.55) } }
+  .s-stretch .body-g { animation: stretch 6s ease-in-out 1; }
+  @keyframes stretch { 0%,100% { transform: scale(1,1) } 45%,60% { transform: scale(1.05,1.06) } }
+
+  /* Wake-up: slow open, big yawn, slow blink */
+  .s-wake .eye    { animation: wakeEye 3s ease-in-out forwards; }
+  .s-wake .mouth  { animation: yawn 3s ease-in-out forwards; }
+  .s-wake .head-g { animation: wakeHead 3s ease-in-out forwards; }
+  @keyframes wakeEye  { 0% { transform: scaleY(.08) } 35% { transform: scaleY(.75) } 48%,62% { transform: scaleY(.2) } 78% { transform: scaleY(.85) } 86% { transform: scaleY(.15) } 100% { transform: scaleY(.95) } }
+  @keyframes yawn     { 0%,38% { transform: scaleY(0) } 55%,72% { transform: scaleY(1) } 90%,100% { transform: scaleY(0) } }
+  @keyframes wakeHead { 0%,38% { transform: rotate(0) } 58% { transform: rotate(-9deg) } 90%,100% { transform: rotate(0) } }
+
+  .s-awake .eye   { transform: scaleY(.95); animation: blink 6s ease-in-out infinite; }
+  @keyframes blink { 0%,90%,100% { transform: scaleY(.95) } 94% { transform: scaleY(.1) } }
+  .s-awake .body-g { animation-duration: 3.5s; }
+
+  .s-awake.s-tilting .arm   { animation: flail 1.1s ease-in-out infinite; }
+  .s-awake.s-tilting .arm.b { animation-delay: -.4s; }
+  .s-fall .eye    { transform: scaleY(1.15); animation: none; }
+  .s-fall .arm    { animation: flail 1.6s ease-in-out infinite; }
+  .s-fall .arm.b  { animation-delay: -.5s; }
+  @keyframes flail { 0%,100% { transform: rotate(-35deg) } 50% { transform: rotate(35deg) } }
+
+  .s-squash #slothInner { animation: squash .9s ease-out 1; }
+  @keyframes squash { 0% { transform: scale(1.06,.8) } 40% { transform: scale(.97,1.05) } 100% { transform: scale(1,1) } }
+
+  #zzz { position: absolute; right: 6px; top: -30px; font-weight: 800; color: var(--muted); font-size: 22px; pointer-events: none; opacity: 0; }
+  .s-sleep #zzz, .s-land #zzz { animation: zzz 5s ease-in-out infinite; }
+  @keyframes zzz { 0% { opacity: 0; transform: translate(0,10px) scale(.7) } 30% { opacity: .9 } 100% { opacity: 0; transform: translate(14px,-34px) scale(1.2) } }
+
+  /* Stop button */
+  #stop {
+    position: absolute; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 7dvh);
+    width: min(60vw, 230px); height: 70px; margin-left: calc(min(60vw, 230px) / -2);
+    border: 0; border-radius: 22px; background: var(--accent); color: #fff;
+    font: 800 24px/1 -apple-system, system-ui, sans-serif; letter-spacing: .12em;
+    box-shadow: 0 8px 0 #9c3532, 0 14px 24px rgba(0,0,0,.25);
+    transform: translateY(220%); transition: transform .9s cubic-bezier(.2,.8,.2,1);
+    touch-action: manipulation; cursor: pointer;
+  }
+  #stop.show { transform: translateY(0); }
+  #stop:active { box-shadow: 0 3px 0 #9c3532; margin-top: 5px; }
+  #stop:disabled { background: #7b6f64; box-shadow: 0 8px 0 #5a5047; color: #e7ddd2; cursor: default; }
+
+  #restart {
+    position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 16px); text-align: center;
+    color: var(--muted); font-size: 15px; text-decoration: underline; opacity: 0; pointer-events: none; transition: opacity .6s;
+  }
+  #restart.show { opacity: 1; pointer-events: auto; }
+
+  /* Intro overlay */
+  #intro {
+    position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: rgba(243,230,207,.82); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    color: #3b2f26; text-align: center; padding: 32px; gap: 8px; transition: opacity .5s;
+  }
+  @media (prefers-color-scheme: dark) { #intro { background: rgba(31,26,22,.82); color: #f3e6cf; } }
+  #intro.gone { opacity: 0; pointer-events: none; }
+  #intro h1 { margin: 0; font-size: 34px; }
+  #intro p { margin: 0; opacity: .75; font-size: 16px; max-width: 260px; }
+  #intro .go { margin-top: 18px; padding: 14px 30px; border-radius: 99px; background: var(--card); color: #f8ecd6; font-weight: 700; font-size: 17px; }
+
+  #debug { position: absolute; left: 6px; bottom: 4px; font: 11px/1.3 ui-monospace, monospace; color: var(--muted); white-space: pre; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="restart">Restart</div>
+
+  <div id="card">
+    <div id="time">00:00<small>.00</small></div>
+  </div>
+
+  <div id="hint">Shake the phone to wake him up</div>
+
+  <div id="sloth" class="s-sleep">
+    <div id="zzz">z z Z</div>
+    <div id="slothInner">
+      <svg viewBox="0 0 240 130" aria-label="A sleepy sloth">
+        <!-- back legs / tail side -->
+        <ellipse cx="38" cy="112" rx="26" ry="13" fill="var(--fur-dark)"/>
+        <g class="body-g">
+          <ellipse cx="108" cy="92" rx="88" ry="32" fill="var(--fur)"/>
+          <ellipse cx="108" cy="104" rx="70" ry="18" fill="var(--fur-light)" opacity=".55"/>
+          <!-- fur tufts -->
+          <path d="M40 66 q6 -8 12 0 M70 60 q6 -8 12 0 M100 58 q6 -8 12 0 M130 60 q6 -8 12 0" stroke="var(--fur-dark)" stroke-width="3" fill="none" stroke-linecap="round"/>
+        </g>
+        <!-- arms hanging over the front of the timer -->
+        <g class="arm"><path d="M92 106 Q88 118 90 126" stroke="var(--fur-dark)" stroke-width="13" stroke-linecap="round" fill="none"/>
+          <path d="M84 127 l-2 5 M90 128 l0 6 M96 127 l2 5" stroke="#efe3cc" stroke-width="3" stroke-linecap="round"/></g>
+        <g class="arm b"><path d="M140 106 Q146 118 144 126" stroke="var(--fur-dark)" stroke-width="13" stroke-linecap="round" fill="none"/>
+          <path d="M136 127 l-2 5 M142 128 l0 6 M148 127 l2 5" stroke="#efe3cc" stroke-width="3" stroke-linecap="round"/></g>
+        <!-- head -->
+        <g class="head-g">
+          <circle cx="196" cy="82" r="31" fill="var(--fur)"/>
+          <ellipse cx="197" cy="85" rx="24" ry="20" fill="var(--face)"/>
+          <!-- eye stripes -->
+          <path d="M176 78 q-4 6 6 12 M218 78 q4 6 -6 12" stroke="var(--fur-dark)" stroke-width="6" stroke-linecap="round" fill="none"/>
+          <g class="eye l fx"><ellipse cx="186" cy="82" rx="5" ry="6" fill="#2a1f17"/><circle cx="187.5" cy="80" r="1.6" fill="#fff"/></g>
+          <g class="eye r fx"><ellipse cx="208" cy="82" rx="5" ry="6" fill="#2a1f17"/><circle cx="209.5" cy="80" r="1.6" fill="#fff"/></g>
+          <ellipse cx="197" cy="92" rx="4.5" ry="3.2" fill="#2a1f17"/>
+          <ellipse class="mouth" cx="197" cy="100" rx="6" ry="6" fill="#5a2a2a"/>
+          <path d="M190 98 q7 5 14 0" stroke="#2a1f17" stroke-width="2" fill="none" stroke-linecap="round"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <button id="stop" type="button">STOP</button>
+  <div id="debug"></div>
+
+  <div id="intro">
+    <h1>Slowth</h1>
+    <p>The timer is already running. A very sleepy sloth is lying on it.</p>
+    <div class="go">Tap to start</div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const card = $('card'), timeEl = $('time'), hint = $('hint'), sloth = $('sloth');
+  const stopBtn = $('stop'), restartEl = $('restart'), intro = $('intro'), dbg = $('debug');
+  const DEBUG = /[?&]debug/.test(location.search);
+
+  /* ---------- Timer (count up, starts on load) ---------- */
+  let t0 = performance.now(), frozen = null;
+  const pad = n => String(n).padStart(2, '0');
+  function fmt(ms) {
+    const cs = Math.floor(ms / 10) % 100, s = Math.floor(ms / 1000) % 60,
+          m = Math.floor(ms / 60000) % 60, h = Math.floor(ms / 3600000);
+    return (h ? h + ':' : '') + pad(m) + ':' + pad(s) + '<small>.' + pad(cs) + '</small>';
+  }
+
+  /* ---------- State ---------- */
+  // intro -> sleeping -> waking -> awake -> falling -> landed -> stopped (stop can also happen earlier)
+  let state = 'intro';
+  let x = 0, v = 0, rot = 0, extraY = 0;       // x offset from card centre (px)
+  let tilt = 0, rawTilt = 0, manualTilt = 0;   // degrees, left/right
+  let fall = null;
+  const setCls = (...c) => { sloth.className = c.join(' '); };
+  const setHint = (txt) => { hint.style.opacity = 0; setTimeout(() => { hint.textContent = txt; hint.style.opacity = 1; }, 300); };
+
+  function enter(s) {
+    state = s;
+    if (s === 'sleeping') { setCls('s-sleep'); }
+    if (s === 'waking')   { setCls('s-wake'); setHint('mmm… he is waking up'); setTimeout(() => state === 'waking' && enter('awake'), 3000); }
+    if (s === 'awake')    { setCls('s-awake'); setHint('Tilt the phone to slide him off'); v = 0; }
+    if (s === 'falling')  { sloth.classList.remove('s-tilting'); setCls('s-fall'); startFall(); setHint(''); }
+    if (s === 'landed')   {
+      setCls('s-awake', 's-squash'); setHint(frozen === null ? 'Press STOP to stop the timer' : '');
+    }
+  }
+
+  /* ---------- Idle lazy moves while asleep ---------- */
+  const lazy = ['s-droop', 's-stir', 's-stretch'];
+  (function scheduleLazy() {
+    setTimeout(() => {
+      if (state === 'sleeping') {
+        const c = lazy[Math.floor(Math.random() * lazy.length)];
+        sloth.classList.add(c);
+        setTimeout(() => sloth.classList.remove(c), 6200);
+      }
+      scheduleLazy();
+    }, 8000 + Math.random() * 7000);
+  })();
+
+  /* ---------- Sensors ---------- */
+  let lastMag = null, shakeHits = [], lastStir = 0;
+  function onMotion(e) {
+    const a = e.accelerationIncludingGravity; if (!a || a.x == null) return;
+    const mag = Math.hypot(a.x, a.y, a.z);
+    if (lastMag !== null) {
+      const d = Math.abs(mag - lastMag), now = performance.now();
+      if (d > 14) { shakeHits.push(now); shakeHits = shakeHits.filter(t => now - t < 1000); if (shakeHits.length >= 3) { shakeHits = []; wake(); } }
+      else if (d > 6 && state === 'sleeping' && now - lastStir > 6000) { lastStir = now; sloth.classList.add('s-stir'); setTimeout(() => sloth.classList.remove('s-stir'), 4600); }
+    }
+    lastMag = mag;
+  }
+  function onOrient(e) { if (e.gamma != null) rawTilt = e.gamma; }
+  addEventListener('devicemotion', onMotion);
+  addEventListener('deviceorientation', onOrient);
+
+  async function enableSensors() {
+    try {
+      const reqs = [];
+      if (window.DeviceMotionEvent && DeviceMotionEvent.requestPermission) reqs.push(DeviceMotionEvent.requestPermission());
+      if (window.DeviceOrientationEvent && DeviceOrientationEvent.requestPermission) reqs.push(DeviceOrientationEvent.requestPermission());
+      await Promise.all(reqs);
+    } catch (_) { /* denied: fallbacks (double-tap / keys / drag) still work */ }
+  }
+
+  function wake() { if (state === 'sleeping') enter('waking'); }
+
+  /* ---------- Fallback controls ---------- */
+  intro.addEventListener('click', () => { enableSensors(); intro.classList.add('gone'); if (state === 'intro') enter('sleeping'); setHint('Shake the phone to wake him up'); });
+  addEventListener('dblclick', wake);
+  let lastTap = 0;
+  addEventListener('pointerdown', e => {
+    if (e.target === stopBtn) return;
+    const n = performance.now(); if (n - lastTap < 350) wake(); lastTap = n;
+  });
+  const keys = {};
+  addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft') keys.l = 1; if (e.key === 'ArrowRight') keys.r = 1;
+    if (e.key === ' ' || e.key === 'w') wake();
+    manualTilt = (keys.r ? 28 : 0) - (keys.l ? 28 : 0);
+  });
+  addEventListener('keyup', e => {
+    if (e.key === 'ArrowLeft') keys.l = 0; if (e.key === 'ArrowRight') keys.r = 0;
+    manualTilt = (keys.r ? 28 : 0) - (keys.l ? 28 : 0);
+  });
+  let dragX0 = null;
+  addEventListener('pointerdown', e => { if (e.target !== stopBtn) dragX0 = e.clientX; });
+  addEventListener('pointermove', e => { if (dragX0 !== null && e.pointerType === 'mouse' && e.buttons) manualTilt = Math.max(-30, Math.min(30, (e.clientX - dragX0) / 3)); });
+  addEventListener('pointerup', () => { dragX0 = null; manualTilt = (keys.r ? 28 : 0) - (keys.l ? 28 : 0); });
+
+  /* ---------- STOP / Restart ---------- */
+  stopBtn.addEventListener('click', () => {
+    if (frozen !== null) return;
+    frozen = performance.now() - t0;
+    timeEl.innerHTML = fmt(frozen);
+    card.classList.add('stopped');
+    stopBtn.disabled = true; stopBtn.textContent = 'STOPPED';
+    restartEl.classList.add('show');
+    if (state === 'landed') setHint('');
+  });
+  restartEl.addEventListener('click', () => {
+    frozen = null; t0 = performance.now(); fall = null; x = 0; v = 0; rot = 0; extraY = 0;
+    card.classList.remove('stopped'); stopBtn.disabled = false; stopBtn.textContent = 'STOP';
+    stopBtn.classList.remove('show'); restartEl.classList.remove('show');
+    enter('sleeping'); setHint('Shake the phone to wake him up');
+  });
+
+  /* ---------- Geometry ---------- */
+  function restPoint() { const r = card.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + 12, half: r.width / 2 }; }
+  function buttonPoint() { // where the stop button will sit once shown
+    const r = stopBtn.getBoundingClientRect(); const off = stopBtn.classList.contains('show') ? 0 : 0;
+    return { x: r.left + r.width / 2, y: r.top - off + 4 };
+  }
+
+  function startFall() {
+    const p = restPoint();
+    // button's final rect (transform removed): compute from layout, not current transform
+    const bottomGap = parseFloat(getComputedStyle(stopBtn).bottom);
+    const bh = stopBtn.offsetHeight, ah = document.getElementById('app').clientHeight;
+    const bw = stopBtn.offsetWidth;
+    const btnTop = ah - bottomGap - bh;
+    const dir = x >= 0 ? 1 : -1;
+    fall = { t0: performance.now(), dur: 2400, x0: p.x + x, y0: p.y, x1: innerWidth / 2, y1: btnTop + 4, dir };
+  }
+
+  /* ---------- Main loop ---------- */
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+
+    // timer
+    if (frozen === null) timeEl.innerHTML = fmt(now - t0);
+
+    // tilt smoothing (low-pass) – the sloth is lazy about everything
+    const target = manualTilt || rawTilt;
+    tilt += (target - tilt) * Math.min(1, dt * 3);
+
+    const p = restPoint();
+    let px = p.x + x, py = p.y;
+
+    if (state === 'awake') {
+      const dead = 8, over = Math.abs(tilt) - dead;
+      let force = 0;
+      if (over > 0) force = Math.sign(tilt) * over * 7;   // px/s² – slow
+      else force = -x * 0.8;                              // claws grip: drifts back to the middle
+      sloth.classList.toggle('s-tilting', over > 0);
+      v += (force - v * 2.6) * dt;
+      x += v * dt;
+      rot += ((tilt * 0.35) - rot) * Math.min(1, dt * 2);
+      if (Math.abs(x) > p.half - 10) enter('falling');
+      px = p.x + x;
+    } else if (state === 'falling' && fall) {
+      const t = Math.min(1, (now - fall.t0) / fall.dur);
+      const ey = t * t * (0.6 + 0.4 * t);                 // slow start, floaty accel
+      const ex = 1 - Math.pow(1 - t, 2);
+      px = fall.x0 + (fall.x1 - fall.x0) * ex;
+      py = fall.y0 + (fall.y1 - fall.y0) * ey;
+      rot = fall.dir * 28 * Math.sin(t * Math.PI * 0.95) + (1 - t) * fall.dir * 6;
+      if (t > 0.5 && !stopBtn.classList.contains('show')) stopBtn.classList.add('show');
+      if (t >= 1) { rot = 0; enter('landed'); }
+    } else if (state === 'landed') {
+      const b = buttonPoint();
+      px = innerWidth / 2; py = b.y; rot += (0 - rot) * Math.min(1, dt * 4);
+    } else {
+      rot += (0 - rot) * Math.min(1, dt * 3);
+    }
+
+    sloth.style.transform = `translate(${px.toFixed(1)}px, ${py.toFixed(1)}px) rotate(${rot.toFixed(2)}deg)`;
+    hint.style.top = (p.y + card.offsetHeight + 28) + 'px';
+
+    if (DEBUG) dbg.textContent = `state ${state}\ngamma ${rawTilt.toFixed(1)} tilt ${tilt.toFixed(1)}\nx ${x.toFixed(1)} v ${v.toFixed(1)}`;
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  // expose for testing
+  window.__slowth = { get state() { return state; }, wake };
+})();
+</script>
+</body>
+</html>
